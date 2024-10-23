@@ -7,6 +7,7 @@ import (
 )
 
 func Calc(expression string) (float64, error) {
+	expression = strings.Replace(expression, " ", "", -1)
 	tokens, err := tokenize(expression)
 	if err != nil {
 		return 0, err
@@ -127,7 +128,7 @@ func evaluateRPN(rpn []string) (float64, error) {
 }
 
 func main() {
-	expression := "3+5*(2-4)/2"
+	expression := " 3 + 5 * ( 2 - 4) /   2"
 	result, err := Calc(expression)
 	if err != nil {
 		println("Ошибка:", err.Error())
