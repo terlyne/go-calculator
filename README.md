@@ -53,24 +53,24 @@
 {
   "expression": "2+2*2"
 }
-
+```
 ### Формат ответа
 Успешный запрос:
 ```json
 {
     "result": 6
 }
-
+```
 Ошибка 422 (некорректное выражение):
 ```json
 {
   "error": "Expression is not valid"
 }
-
+```
 Ошибка 500 (внутренняя ошибка):
 ```json
 {
   "error": "Internal server error"
 }
-
+```
 
