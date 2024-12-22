@@ -1,4 +1,4 @@
-# Calculator Service  
+<h1 align="center"> Calculator Service </h1>  
 
 **Calculator Service** — веб-сервис для вычисления арифметических выражений.  
 
