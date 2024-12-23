@@ -22,7 +22,7 @@
 
 3. Запустите сервис:
     ```bash
-    go run ./cmd/go-calculator
+    go run ./cmd/calc-service/main.go
 
 ---
 
