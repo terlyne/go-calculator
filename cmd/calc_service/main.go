@@ -31,7 +31,17 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var statusCode int
 		switch err.Error() {
-		case "Invalid character in expression":
+		case "Недопустимый символ в выражении":
+			statusCode = http.StatusUnprocessableEntity
+		case "Несовпадение скобок":
+			statusCode = http.StatusUnprocessableEntity
+		case "Ошибка вычисления: недостаточно операндов":
+			statusCode = http.StatusUnprocessableEntity
+		case "Ошибка преобразования числа":
+			statusCode = http.StatusUnprocessableEntity
+		case "Деление на ноль":
+			statusCode = http.StatusUnprocessableEntity
+		case "Ошибка вычисления: неверное количество элементов на стеке":
 			statusCode = http.StatusUnprocessableEntity
 		default:
 			statusCode = http.StatusInternalServerError
@@ -41,12 +51,17 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(CalculateResponse{Result: strconv.FormatFloat(result, 'f', -1, 64)})
+	res := strconv.FormatFloat(result, 'f', -1, 64)
+
+	json.NewEncoder(w).Encode(CalculateResponse{Result: res})
 }
 
 func main() {
+
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/calculate", calculateHandler).Methods("POST")
+	r.HandleFunc("/api/v1/calculate", func(w http.ResponseWriter, r *http.Request) {
+		calculateHandler(w, r)
+	}).Methods("POST")
 
 	http.ListenAndServe(":8080", r)
 }
