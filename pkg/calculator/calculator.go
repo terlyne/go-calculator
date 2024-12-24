@@ -37,7 +37,7 @@ func tokenize(expression string) ([]string, error) {
 			}
 			tokens = append(tokens, string(c))
 		default:
-			return nil, errors.New("Недопустимый символ в выражении: " + string(c))
+			return nil, errors.New("Недопустимый символ в выражении")
 		}
 	}
 	if current.Len() > 0 {
