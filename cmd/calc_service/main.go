@@ -1,7 +1,7 @@
 package main
 
 import (
-	"calculator/pkg/calculator"
+	"github.com/terlyne/go-calculator/pkg/calculator"
 	"encoding/json"
 	"net/http"
 	"strconv"

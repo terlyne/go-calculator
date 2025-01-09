@@ -1,4 +1,4 @@
-module calculator
+module github.com/terlyne/go-calculator
 
 go 1.23.1
 
