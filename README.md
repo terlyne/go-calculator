@@ -56,49 +56,58 @@
 ## Запросы
 
 ### Формат запроса
-    {
-        "expression": "2+2*2"
-    }
+```json
+{
+    "expression": "2+2*2"
+}
+```
+
 ### Формат ответа
 Успешный запрос:
-
-    {
-        "id": "expr_1"
-    }
+```json
+{
+    "id": "expr_1"
+}
+```
 
 ---
 
 ## Получение результата
 После добавления выражения, вы можете получить его статус и результат, используя следующий запрос:
-
-    curl --location 'http://localhost:8080/api/v1/expressions'
+```bash
+curl --location 'http://localhost:8080/api/v1/expressions'
+```
 
 Формат ответа:
-
-    {
-        "expressions": [
-            {
-                "id": "expr_1",
-                "status": "completed",
-                "result": "6"
-            }
-        ]
-    }
+```json
+{
+    "expressions": [
+        {
+            "id": "expr_1",
+            "status": "completed",
+            "result": "6"
+        }
+    ]
+}
+```
 
 ### Ошибки
 Ошибка 422 (некорректное выражение):
-
-    {
-        "error": "Expression is not valid"
-    }
+```json
+{
+    "error": "Expression is not valid"
+}
+```
 
 Ошибка 500 (внутренняя ошибка):
-
-    {
-        "error": "Internal server error"
-    }
+```json
+{
+    "error": "Internal server error"
+}
+```
 
 ## Тестирование
 Для запуска тестов используйте команду:
-
-    go test ./...
+```bash
+go test ./...
+```
