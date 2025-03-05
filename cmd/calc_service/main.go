@@ -1,10 +1,13 @@
 package main
 
 import (
-	"github.com/terlyne/go-calculator/pkg/calculator"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/terlyne/go-calculator/pkg/calculator"
+	"github.com/terlyne/go-calculator/pkg/orchestrator"
 
 	"github.com/gorilla/mux"
 )
@@ -57,6 +60,8 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	log.Println("Старт оркестратора...")
+	orchestrator.StartServer()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/calculate", func(w http.ResponseWriter, r *http.Request) {
