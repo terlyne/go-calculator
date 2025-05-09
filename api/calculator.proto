@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package calculator;
+
+option go_package = "github.com/terlyne/go-calculator/api";
+
+service Calculator {
+  rpc Calculate(CalculateRequest) returns (CalculateResponse) {}
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc GetExpressions(GetExpressionsRequest) returns (GetExpressionsResponse) {}
+}
+
+message CalculateRequest {
+  string expression = 1;
+  string token = 2;
+}
+
+message CalculateResponse {
+  double result = 1;
+  string error = 2;
+}
+
+message RegisterRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  string error = 2;
+}
+
+message GetExpressionsRequest {
+  string token = 1;
+}
+
+message GetExpressionsResponse {
+  repeated Expression expressions = 1;
+  string error = 2;
+}
+
+message Expression {
+  int64 id = 1;
+  string expression = 2;
+  double result = 3;
+  string status = 4;
+  string created_at = 5;
+  string updated_at = 6;
+} 

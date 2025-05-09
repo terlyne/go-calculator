@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  calculator:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: calculator-service
+    ports:
+      - "50051:50051"  # gRPC порт
+      - "8080:8080"    # HTTP порт
+    environment:
+      - CGO_ENABLED=1
+      - JWT_SECRET_KEY=your-secure-secret-key
+      - DB_PATH=/app/storage/storage.db
+    volumes:
+      - ./storage:/app/storage
+    networks:
+      - calculator-network
+
+networks:
+  calculator-network:
+    driver: bridge 
