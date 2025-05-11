@@ -16,7 +16,7 @@ import (
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
 // Requires gRPC-Go v1.64.0 or later.
-const _ = grpc.SupportPackageIsVersion9
+const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Calculator_Calculate_FullMethodName      = "/calculator.Calculator/Calculate"
@@ -26,8 +26,6 @@ const (
 )
 
 // CalculatorClient is the client API for Calculator service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalculatorClient interface {
 	Calculate(ctx context.Context, in *CalculateRequest, opts ...grpc.CallOption) (*CalculateResponse, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
@@ -44,9 +42,8 @@ func NewCalculatorClient(cc grpc.ClientConnInterface) CalculatorClient {
 }
 
 func (c *calculatorClient) Calculate(ctx context.Context, in *CalculateRequest, opts ...grpc.CallOption) (*CalculateResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CalculateResponse)
-	err := c.cc.Invoke(ctx, Calculator_Calculate_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Calculator_Calculate_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +51,8 @@ func (c *calculatorClient) Calculate(ctx context.Context, in *CalculateRequest, 
 }
 
 func (c *calculatorClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, Calculator_Register_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Calculator_Register_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +60,8 @@ func (c *calculatorClient) Register(ctx context.Context, in *RegisterRequest, op
 }
 
 func (c *calculatorClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, Calculator_Login_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Calculator_Login_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +69,8 @@ func (c *calculatorClient) Login(ctx context.Context, in *LoginRequest, opts ...
 }
 
 func (c *calculatorClient) GetExpressions(ctx context.Context, in *GetExpressionsRequest, opts ...grpc.CallOption) (*GetExpressionsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetExpressionsResponse)
-	err := c.cc.Invoke(ctx, Calculator_GetExpressions_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Calculator_GetExpressions_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +78,6 @@ func (c *calculatorClient) GetExpressions(ctx context.Context, in *GetExpression
 }
 
 // CalculatorServer is the server API for Calculator service.
-// All implementations must embed UnimplementedCalculatorServer
-// for forward compatibility.
 type CalculatorServer interface {
 	Calculate(context.Context, *CalculateRequest) (*CalculateResponse, error)
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
@@ -94,11 +86,7 @@ type CalculatorServer interface {
 	mustEmbedUnimplementedCalculatorServer()
 }
 
-// UnimplementedCalculatorServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
+// UnimplementedCalculatorServer must be embedded to have forward compatible implementations.
 type UnimplementedCalculatorServer struct{}
 
 func (UnimplementedCalculatorServer) Calculate(context.Context, *CalculateRequest) (*CalculateResponse, error) {
@@ -114,20 +102,13 @@ func (UnimplementedCalculatorServer) GetExpressions(context.Context, *GetExpress
 	return nil, status.Errorf(codes.Unimplemented, "method GetExpressions not implemented")
 }
 func (UnimplementedCalculatorServer) mustEmbedUnimplementedCalculatorServer() {}
-func (UnimplementedCalculatorServer) testEmbeddedByValue()                    {}
 
 // UnsafeCalculatorServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to CalculatorServer will
-// result in compilation errors.
 type UnsafeCalculatorServer interface {
 	mustEmbedUnimplementedCalculatorServer()
 }
 
 func RegisterCalculatorServer(s grpc.ServiceRegistrar, srv CalculatorServer) {
-	// If the following call pancis, it indicates UnimplementedCalculatorServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
@@ -207,8 +188,6 @@ func _Calculator_GetExpressions_Handler(srv interface{}, ctx context.Context, de
 }
 
 // Calculator_ServiceDesc is the grpc.ServiceDesc for Calculator service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
 var Calculator_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "calculator.Calculator",
 	HandlerType: (*CalculatorServer)(nil),

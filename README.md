@@ -82,32 +82,6 @@ grpcurl -plaintext -d '{"token": "YOUR_JWT_TOKEN"}' \
     localhost:50051 calculator.Calculator/GetExpressions
 ```
 
-## Структура проекта
-
-```
-.
-├── api/
-│   └── calculator.proto        # Определение gRPC сервиса
-├── cmd/
-│   └── calc_service/
-│       ├── main.go            # Основной файл сервиса
-│       ├── main_test.go       # Модульные тесты
-│       └── integration_test.go # Интеграционные тесты
-├── internal/
-│   ├── auth/
-│   │   └── auth.go           # Аутентификация и JWT
-│   ├── database/
-│   │   └── database.go       # Работа с базой данных
-│   └── models/
-│       └── models.go         # Модели данных
-├── pkg/
-│   └── calculator/
-│       └── calculator.go     # Логика вычислений
-├── Dockerfile               # Конфигурация Docker
-├── docker-compose.yml      # Конфигурация Docker Compose
-└── README.md              # Документация
-```
-
 ## Переменные окружения
 
 - `CGO_ENABLED` - Включение поддержки CGO (требуется для SQLite)
