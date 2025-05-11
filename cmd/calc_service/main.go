@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,16 +23,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Структура сервера, реализующая gRPC интерфейс
 type server struct {
 	pb.UnimplementedCalculatorServer
 	db   *database.Database
 	auth *auth.Auth
 }
 
+// Регистрация нового пользователя
 func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	hashedPassword, err := s.auth.HashPassword(req.Password)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to hash password")
+		return nil, status.Error(codes.Internal, "ошибка хеширования пароля")
 	}
 
 	user := &models.User{
@@ -40,34 +43,36 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	}
 
 	if err := s.db.CreateUser(user); err != nil {
-		return nil, status.Error(codes.AlreadyExists, "user already exists")
+		return nil, status.Error(codes.AlreadyExists, "пользователь уже существует")
 	}
 
 	return &pb.RegisterResponse{Success: true}, nil
 }
 
+// Вход в систему
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	user, err := s.db.GetUserByLogin(req.Login)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "user not found")
+		return nil, status.Error(codes.NotFound, "пользователь не найден")
 	}
 
 	if !s.auth.CheckPasswordHash(req.Password, user.Password) {
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
+		return nil, status.Error(codes.Unauthenticated, "неверные учетные данные")
 	}
 
 	token, err := s.auth.GenerateToken(user.ID, user.Login)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to generate token")
+		return nil, status.Error(codes.Internal, "ошибка генерации токена")
 	}
 
 	return &pb.LoginResponse{Token: token}, nil
 }
 
+// Вычисление выражения
 func (s *server) Calculate(ctx context.Context, req *pb.CalculateRequest) (*pb.CalculateResponse, error) {
 	claims, err := s.auth.ValidateToken(req.Token)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid token")
+		return nil, status.Error(codes.Unauthenticated, "неверный токен")
 	}
 
 	result, err := calculator.Calc(req.Expression)
@@ -83,21 +88,22 @@ func (s *server) Calculate(ctx context.Context, req *pb.CalculateRequest) (*pb.C
 	}
 
 	if err := s.db.SaveExpression(expr); err != nil {
-		return nil, status.Error(codes.Internal, "failed to save expression")
+		return nil, status.Error(codes.Internal, "ошибка сохранения выражения")
 	}
 
 	return &pb.CalculateResponse{Result: result}, nil
 }
 
+// Получение истории вычислений
 func (s *server) GetExpressions(ctx context.Context, req *pb.GetExpressionsRequest) (*pb.GetExpressionsResponse, error) {
 	claims, err := s.auth.ValidateToken(req.Token)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid token")
+		return nil, status.Error(codes.Unauthenticated, "неверный токен")
 	}
 
 	expressions, err := s.db.GetUserExpressions(claims.UserID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get expressions")
+		return nil, status.Error(codes.Internal, "ошибка получения выражений")
 	}
 
 	var response []*pb.Expression
@@ -116,91 +122,119 @@ func (s *server) GetExpressions(ctx context.Context, req *pb.GetExpressionsReque
 }
 
 func main() {
-	// Initialize database
+	// Инициализация базы данных
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		dbPath = ":memory:" // Используем in-memory базу данных по умолчанию
-		log.Println("Using in-memory database for testing")
+		log.Println("Используется in-memory база данных для тестирования")
 	}
 
 	db, err := database.NewDatabase(dbPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		log.Fatalf("Ошибка инициализации базы данных: %v", err)
 	}
 	defer db.Close()
 
-	// Initialize auth with a secure secret key
+	// Инициализация аутентификации с безопасным секретным ключом
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
 		secretKey = "your-secret-key" // В продакшене обязательно использовать переменную окружения
-		log.Println("Warning: Using default JWT secret key. Set JWT_SECRET_KEY environment variable in production.")
+		log.Println("Предупреждение: Используется стандартный JWT секретный ключ. Установите переменную окружения JWT_SECRET_KEY в продакшене.")
 	}
 	auth := auth.NewAuth(secretKey)
 
-	// Create server instance
+	// Создание экземпляра сервера
 	server := &server{
 		db:   db,
 		auth: auth,
 	}
 
-	// Start gRPC server
+	// Запуск gRPC сервера
 	go func() {
 		lis, err := net.Listen("tcp", ":50051")
 		if err != nil {
-			log.Fatalf("Failed to listen: %v", err)
+			log.Fatalf("Ошибка запуска сервера: %v", err)
 		}
 
 		s := grpc.NewServer()
 		pb.RegisterCalculatorServer(s, server)
 
-		log.Println("Starting gRPC server on :50051")
+		log.Println("Запуск gRPC сервера на порту :50051")
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
+			log.Fatalf("Ошибка работы сервера: %v", err)
 		}
 	}()
 
-	// Start HTTP server
+	// Запуск HTTP сервера
 	go func() {
 		r := mux.NewRouter()
 		r.HandleFunc("/api/v1/calculate", server.calculateHandler).Methods("POST")
 
-		log.Println("Starting HTTP server on :8080")
+		log.Println("Запуск HTTP сервера на порту :8080")
 		if err := http.ListenAndServe(":8080", r); err != nil {
-			log.Fatalf("Failed to serve HTTP: %v", err)
+			log.Fatalf("Ошибка работы HTTP сервера: %v", err)
 		}
 	}()
 
-	// Handle graceful shutdown
+	// Обработка graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down servers...")
+	log.Println("Завершение работы серверов...")
 }
 
 // HTTP handler for calculation
 func (s *server) calculateHandler(w http.ResponseWriter, r *http.Request) {
+	// Получаем токен из заголовка Authorization
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, `{"error": "Authorization header is required"}`, http.StatusUnauthorized)
+		return
+	}
+
+	// Проверяем формат токена (Bearer token)
+	tokenParts := strings.Split(authHeader, " ")
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		http.Error(w, `{"error": "Invalid authorization header format"}`, http.StatusUnauthorized)
+		return
+	}
+
+	token := tokenParts[1]
+
+	// Проверяем валидность токена
+	claims, err := s.auth.ValidateToken(token)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid token"}`, http.StatusUnauthorized)
+		return
+	}
+
 	var req struct {
 		Expression string `json:"expression"`
 	}
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
 	result, err := calculator.Calc(req.Expression)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
-	response := struct {
-		Result string `json:"result"`
-	}{
-		Result: result,
+	expr := &models.Expression{
+		UserID:     claims.UserID,
+		Expression: req.Expression,
+		Result:     result,
+		Status:     "completed",
+	}
+
+	if err := s.db.SaveExpression(expr); err != nil {
+		http.Error(w, `{"error": "Failed to save expression"}`, http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(map[string]float64{"result": result})
 }

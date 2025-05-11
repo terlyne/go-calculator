@@ -1,6 +1,6 @@
-# Distributed Calculator
+# Калькулятор на Go
 
-Распределенный калькулятор с поддержкой аутентификации пользователей, вычислением выражений и отслеживанием истории.
+Сервис для вычисления математических выражений с поддержкой аутентификации и хранения истории вычислений.
 
 ## Возможности
 
@@ -13,46 +13,22 @@
 
 ## Требования
 
-- Go 1.23 или выше
-- Protocol Buffers compiler (protoc)
-- Go плагины для protoc
-- GCC (для работы с SQLite)
+- Go 1.21 или выше
+- Docker и Docker Compose (для запуска через Docker)
+- SQLite3 (для локальной разработки)
 
-## Установка
+## Запуск через Docker
 
-1. Клонируйте репозиторий:
+1. Соберите и запустите контейнер:
 ```bash
-git clone https://github.com/yourusername/go-calculator.git
-cd go-calculator
+docker-compose up --build
 ```
 
-2. Установите зависимости:
-```bash
-go mod download
-```
+Сервис будет доступен на следующих портах:
+- gRPC: 50051
+- HTTP: 8080
 
-3. Установите Protocol Buffers compiler:
-```bash
-# Windows (Chocolatey)
-choco install protoc
-
-# Или скачайте вручную с https://github.com/protocolbuffers/protobuf/releases
-```
-
-4. Установите Go плагины для protoc:
-```bash
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-```
-
-5. Сгенерируйте gRPC код:
-```bash
-protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    api/calculator.proto
-```
-
-## Запуск сервиса
+## Локальная разработка
 
 1. Установите переменные окружения:
 ```bash
@@ -72,8 +48,6 @@ set DB_PATH=storage/storage.db
 go run ./cmd/calc_service/main.go
 ```
 
-Сервис запустится на порту 50051.
-
 ## Использование API
 
 ### Регистрация нового пользователя
@@ -88,7 +62,15 @@ grpcurl -plaintext -d '{"login": "user1", "password": "password123"}' \
     localhost:50051 calculator.Calculator/Login
 ```
 
-### Вычисление выражения
+### Вычисление выражения (HTTP API)
+```bash
+curl -X POST http://localhost:8080/api/v1/calculate \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"expression": "2+2*2"}'
+```
+
+### Вычисление выражения (gRPC API)
 ```bash
 grpcurl -plaintext -d '{"expression": "2+2*2", "token": "YOUR_JWT_TOKEN"}' \
     localhost:50051 calculator.Calculator/Calculate
@@ -115,18 +97,22 @@ grpcurl -plaintext -d '{"token": "YOUR_JWT_TOKEN"}' \
 │   ├── auth/
 │   │   └── auth.go           # Аутентификация и JWT
 │   ├── database/
-│   │   └── database.go       # Работа с SQLite
+│   │   └── database.go       # Работа с базой данных
 │   └── models/
-│       └── user.go           # Модели данных
+│       └── models.go         # Модели данных
 ├── pkg/
 │   └── calculator/
-│       └── calculator.go      # Логика вычислений
-├── storage/
-│   └── storage.db            # База данных SQLite
-├── go.mod
-├── go.sum
-└── README.md
+│       └── calculator.go     # Логика вычислений
+├── Dockerfile               # Конфигурация Docker
+├── docker-compose.yml      # Конфигурация Docker Compose
+└── README.md              # Документация
 ```
+
+## Переменные окружения
+
+- `CGO_ENABLED` - Включение поддержки CGO (требуется для SQLite)
+- `JWT_SECRET_KEY` - Секретный ключ для JWT токенов
+- `DB_PATH` - Путь к файлу базы данных SQLite (по умолчанию используется in-memory база)
 
 ## Тестирование
 
@@ -156,10 +142,3 @@ go test ./cmd/calc_service/integration_test.go
 - Все чувствительные данные хранятся безопасно в базе данных
 - В продакшене обязательно использовать переменную окружения JWT_SECRET_KEY
 
-## Вклад в проект
-
-1. Форкните репозиторий
-2. Создайте ветку для вашей функциональности
-3. Зафиксируйте изменения
-4. Отправьте изменения в ветку
-5. Создайте Pull Request
